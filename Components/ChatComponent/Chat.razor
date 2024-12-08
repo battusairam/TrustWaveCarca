@@ -1,10 +1,13 @@
 ﻿@page "/chat/{userId}/{TargetUserId}"
 @using Microsoft.AspNetCore.SignalR
 @using Microsoft.AspNetCore.SignalR.Client
+@using TrustWaveCarca.Components.ChatComponent
+@using TrustWaveCarca.Components.ChatComponent.Feature
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 @inject IHubContext<ChatHub> HubContext
 @rendermode InteractiveServer
+@attribute [Authorize]
 
 <style>
     .chat-container {
@@ -60,8 +63,9 @@
             padding: 10px;
             margin-bottom: 10px;
             border-radius: 15px;
+            
             position: relative;
-            max-width: 70%;
+            max-width: 50%;
             word-wrap: break-word;
         }
 
@@ -136,6 +140,19 @@
         color: #888;
         margin-left: 10px;
     }
+
+    .typing-indicator {
+        font-style: italic;
+        color: #888;
+        margin-top: 5px;
+        margin-bottom: -10px;
+    }
+    .messages-container {
+    height: 300px; /* Set a fixed height */
+    overflow-y: scroll; /* Enable vertical scrolling */
+    scroll-behavior: smooth; /* Smooth scroll effect */
+}
+
 </style>
 
 <div class="chat-container">
@@ -146,12 +163,17 @@
         <span>Status:</span>
         <span class="status-dot @GetUserStatusClass(TargetUserId)"></span>
     </div>
-
+    <div>
+        @if (isTyping)
+        {
+            <p class="typing-indicator">@TargetUserId is typing...</p>
+        }
+    </div>
     <div class="chat-messages" @ref="messagesContainer">
         @if (messages.Any())
         {
             <ul>
-                @foreach (var msg in messages )
+                @foreach (var msg in messages)
                 {
                     <li class="@GetMessageClass(msg.Content)">
                         <span class="message-content">
@@ -180,29 +202,67 @@
     </div>
 
     <div class="chat-input">
-        <input type="text" @bind="message" placeholder="Type a message..." />
-        <button  class="btn btnbgcolor shadow-lg" @onclick="SendMessage">
+        <button class="btn" @onclick="ToggleEmojiPicker">😊</button>
+        <input type="text" @bind="message" @oninput="OnMessageTyping" placeholder="Type a message..." />
+        <button class="btn btnbgcolor"
+                @onclick="SendMessage"
+                disabled="@(hubConnection?.State != HubConnectionState.Connected)">
             <i class="bi bi-send-fill"></i> Send
         </button>
-        @* <button @onclick="SendMessage">Send</button> *@
     </div>
+
+    <!-- Emoji picker component -->
+    <EmojiPicker OnEmojiSelected="OnEmojiSelected" />
+
 </div>
 
 @code {
     [Parameter] public string UserId { get; set; }
     [Parameter] public string TargetUserId { get; set; }
 
+
     private HubConnection? hubConnection;
     private string message = string.Empty;
     private List<ChatMessage> messages = new List<ChatMessage>();
     private ElementReference messagesContainer;
-
     private Dictionary<string, bool> userStatuses = new();
+    private bool isTyping;
+    private Timer typingTimer;
+
 
     private string GetUserStatusClass(string userId)
     {
         return userStatuses.ContainsKey(userId) && userStatuses[userId] ? "online" : "offline";
     }
+
+    private void OnMessageTyping()
+    {
+        if (!isTyping)
+        {
+            isTyping = true;
+            NotifyTyping(true);
+        }
+
+        typingTimer?.Dispose();
+        typingTimer = new Timer(TypingTimeout, null, 2000, Timeout.Infinite);
+    }
+
+    private async void TypingTimeout(object state)
+    {
+        isTyping = false;
+        NotifyTyping(false);
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task NotifyTyping(bool typing)
+    {
+        if (hubConnection != null)
+        {
+            await hubConnection.SendAsync("NotifyTyping", UserId, TargetUserId, typing);
+        }
+    }
+
 
     private string GetMessageClass(string msg)
     {
@@ -216,22 +276,43 @@
             return "received";
         }
     }
+    private void ToggleEmojiPicker()
+    {
+        JSRuntime.InvokeVoidAsync("toggleEmojiPicker");
+    }
+
+    // Handle emoji selection
+    private void OnEmojiSelected(string emoji)
+    {
+        message += emoji; // Add the selected emoji to the message input field
+    }
+
 
     protected override async Task OnInitializedAsync()
     {
-        Console.WriteLine($"Connected to SignalR with client ConnectionId: {UserId}");
-
+        // Establish SignalR connection
         hubConnection = new HubConnectionBuilder()
             .WithUrl(NavigationManager.ToAbsoluteUri($"/chathub?userId={UserId}"))
             .Build();
 
-        hubConnection.On<string, bool>("UpdateUserStatus", (userId, isOnline) =>
+        hubConnection.On<string, bool>("UserTyping", async (fromUserId, isTyping) =>
         {
-            InvokeAsync(() =>
+            if (fromUserId == TargetUserId)
+            {
+                this.isTyping = isTyping;
+                await InvokeAsync(StateHasChanged);
+            }
+        });
+
+        hubConnection.On<string, bool>("UpdateUserStatus", async (userId, isOnline) =>
+        {
+            if (userId == TargetUserId) // Update only the target user
             {
                 userStatuses[userId] = isOnline;
-                StateHasChanged();
-            });
+                await InvokeAsync(StateHasChanged);
+                
+
+            }
         });
 
         hubConnection.On<string>("ReceiveMessage", (receivedMessage) =>
@@ -245,30 +326,61 @@
                     });
                 // Scroll to the bottom after adding a new message
                 await ScrollToBottom();
-                StateHasChanged();
+                await InvokeAsync(StateHasChanged);
+
             });
         });
 
-        await hubConnection.StartAsync();
-        Console.WriteLine($"Connected to SignalR with ConnectionId: {hubConnection.ConnectionId}");
+        try
+        { 
+            // Start the connection and ensure the status is updated
+            await hubConnection.StartAsync();
+            await NotifyUserStatus(true);
+            Console.WriteLine("Connection started successfully.");
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error starting connection: {ex.Message}");
+        }
+      
+    }
+
+    private async Task NotifyUserStatus(bool isOnline)
+    {
+        if (hubConnection != null)
+        {
+            await hubConnection.SendAsync("NotifyUserStatus", UserId, isOnline);
+        }
     }
 
     private async Task SendMessage()
     {
-        if (hubConnection is not null && !string.IsNullOrEmpty(message))
+        if (hubConnection is not null && hubConnection.State == HubConnectionState.Connected && !string.IsNullOrEmpty(message))
         {
-            await hubConnection.SendAsync("SendMessage", TargetUserId, message);
-            messages.Add(new ChatMessage
-                {
-                    Content = $"Send: {message}",
-                    Timestamp = DateTime.Now
-                });
-            // Scroll to the bottom after sending a new message
-            await ScrollToBottom();
+            try
+            {
+                await hubConnection.SendAsync("SendMessage", TargetUserId, message);
+                messages.Add(new ChatMessage
+                    {
+                        Content = $"Send: {message}",
+                        Timestamp = DateTime.Now
+                    });
+                // Scroll to the bottom after sending a new message
+                await ScrollToBottom();
 
-            message = string.Empty;
+                message = string.Empty;
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Error sending message: {ex.Message}");
+            }
+        }
+        else
+        {
+            Console.Error.WriteLine("Cannot send message: The connection is not active.");
         }
     }
+
     private async Task ScrollToBottom()
     {
         // This uses JS interop to scroll the chat messages container to the bottom

@@ -1,0 +1,103 @@
+﻿@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+@using TrustWaveCarca
+
+<div class="emoji-picker mt-3" id="emojiPicker" style="display:none;">
+    <span @onclick='() => AddEmoji("😊")' class="cursor-pointer">😊</span>
+    <span @onclick='() => AddEmoji("😂")' class="cursor-pointer">😂</span>
+    <span @onclick='() => AddEmoji("😍")' class="cursor-pointer">😍</span>
+    <span @onclick='() => AddEmoji("😢")' class="cursor-pointer">😢</span>
+    <span @onclick='() => AddEmoji("😎")' class="cursor-pointer">😎</span>
+    <span @onclick='() => AddEmoji("😜")' class="cursor-pointer">😜</span>
+    <span @onclick='() => AddEmoji("😄")' class="cursor-pointer">😄</span>
+    <span @onclick='() => AddEmoji("😃")' class="cursor-pointer">😃</span>
+    <span @onclick='() => AddEmoji("😅")' class="cursor-pointer">😅</span>
+    <span @onclick='() => AddEmoji("🤣")' class="cursor-pointer">🤣</span>
+    <span @onclick='() => AddEmoji("😡")' class="cursor-pointer">😡</span>
+    <span @onclick='() => AddEmoji("😇")' class="cursor-pointer">😇</span>
+    <span @onclick='() => AddEmoji("😋")' class="cursor-pointer">😋</span>
+    <span @onclick='() => AddEmoji("😱")' class="cursor-pointer">😱</span>
+    <span @onclick='() => AddEmoji("😷")' class="cursor-pointer">😷</span>
+    <span @onclick='() => AddEmoji("🤔")' class="cursor-pointer">🤔</span>
+    <span @onclick='() => AddEmoji("😬")' class="cursor-pointer">😬</span>
+    <span @onclick='() => AddEmoji("🙄")' class="cursor-pointer">🙄</span>
+    <span @onclick='() => AddEmoji("😴")' class="cursor-pointer">😴</span>
+    <span @onclick='() => AddEmoji("🤗")' class="cursor-pointer">🤗</span>
+    <span @onclick='() => AddEmoji("😜")' class="cursor-pointer">😜</span>
+    <span @onclick='() => AddEmoji("😝")' class="cursor-pointer">😝</span>
+    <span @onclick='() => AddEmoji("🤪")' class="cursor-pointer">🤪</span>
+    <span @onclick='() => AddEmoji("😏")' class="cursor-pointer">😏</span>
+    <span @onclick='() => AddEmoji("🧐")' class="cursor-pointer">🧐</span>
+    <span @onclick='() => AddEmoji("🥺")' class="cursor-pointer">🥺</span>
+    <span @onclick='() => AddEmoji("😔")' class="cursor-pointer">😔</span>
+    <span @onclick='() => AddEmoji("🙃")' class="cursor-pointer">🙃</span>
+    <span @onclick='() => AddEmoji("🤐")' class="cursor-pointer">🤐</span>
+    <span @onclick='() => AddEmoji("🥰")' class="cursor-pointer">🥰</span>
+    <span @onclick='() => AddEmoji("🤯")' class="cursor-pointer">🤯</span>
+    <span @onclick='() => AddEmoji("🥳")' class="cursor-pointer">🥳</span>
+    <span @onclick='() => AddEmoji("😑")' class="cursor-pointer">😑</span>
+    <span @onclick='() => AddEmoji("😶")' class="cursor-pointer">😶</span>
+    <span @onclick='() => AddEmoji("😬")' class="cursor-pointer">😬</span>
+    <span @onclick='() => AddEmoji("🤑")' class="cursor-pointer">🤑</span>
+    <span @onclick='() => AddEmoji("😴")' class="cursor-pointer">😴</span>
+    <span @onclick='() => AddEmoji("🤡")' class="cursor-pointer">🤡</span>
+    <span @onclick='() => AddEmoji("👻")' class="cursor-pointer">👻</span>
+    <span @onclick='() => AddEmoji("💀")' class="cursor-pointer">💀</span>
+    <span @onclick='() => AddEmoji("👽")' class="cursor-pointer">👽</span>
+    <span @onclick='() => AddEmoji("🤖")' class="cursor-pointer">🤖</span>
+    <span @onclick='() => AddEmoji("🎃")' class="cursor-pointer">🎃</span>
+    <span @onclick='() => AddEmoji("👀")' class="cursor-pointer">👀</span>
+    <span @onclick='() => AddEmoji("💋")' class="cursor-pointer">💋</span>
+    <span @onclick='() => AddEmoji("💌")' class="cursor-pointer">💌</span>
+    <span @onclick='() => AddEmoji("💍")' class="cursor-pointer">💍</span>
+    <span @onclick='() => AddEmoji("💎")' class="cursor-pointer">💎</span>
+    <span @onclick='() => AddEmoji("❤️")' class="cursor-pointer">❤️</span>
+    <span @onclick='() => AddEmoji("💖")' class="cursor-pointer">💖</span>
+    <span @onclick='() => AddEmoji("💓")' class="cursor-pointer">💓</span>
+    <span @onclick='() => AddEmoji("💗")' class="cursor-pointer">💗</span>
+    <span @onclick='() => AddEmoji("💙")' class="cursor-pointer">💙</span>
+    <span @onclick='() => AddEmoji("💚")' class="cursor-pointer">💚</span>
+    <span @onclick='() => AddEmoji("💛")' class="cursor-pointer">💛</span>
+    <span @onclick='() => AddEmoji("💜")' class="cursor-pointer">💜</span>
+    <span @onclick='() => AddEmoji("🧡")' class="cursor-pointer">🧡</span>
+    <span @onclick='() => AddEmoji("💔")' class="cursor-pointer">💔</span>
+    <span @onclick='() => AddEmoji("💕")' class="cursor-pointer">💕</span>
+    <span @onclick='() => AddEmoji("💞")' class="cursor-pointer">💞</span>
+    <span @onclick='() => AddEmoji("❣️")' class="cursor-pointer">❣️</span>
+    <span @onclick='() => AddEmoji("💟")' class="cursor-pointer">💟</span>
+    <span @onclick='() => AddEmoji("☠️")' class="cursor-pointer">☠️</span>
+    <span @onclick='() => AddEmoji("⚰️")' class="cursor-pointer">⚰️</span>
+    <span @onclick='() => AddEmoji("🔥")' class="cursor-pointer">🔥</span>
+    <span @onclick='() => AddEmoji("✨")' class="cursor-pointer">✨</span>
+    <span @onclick='() => AddEmoji("🌟")' class="cursor-pointer">🌟</span>
+    <span @onclick='() => AddEmoji("🌈")' class="cursor-pointer">🌈</span>
+    <span @onclick='() => AddEmoji("☀️")' class="cursor-pointer">☀️</span>
+    <span @onclick='() => AddEmoji("🌤️")' class="cursor-pointer">🌤️</span>
+    <span @onclick='() => AddEmoji("🌧️")' class="cursor-pointer">🌧️</span>
+    <span @onclick='() => AddEmoji("🌩️")' class="cursor-pointer">🌩️</span>
+    <span @onclick='() => AddEmoji("❄️")' class="cursor-pointer">❄️</span>
+    <span @onclick='() => AddEmoji("🌬️")' class="cursor-pointer">🌬️</span>
+    <span @onclick='() => AddEmoji("🌪️")' class="cursor-pointer">🌪️</span>
+    <span @onclick='() => AddEmoji("🌫️")' class="cursor-pointer">🌫️</span>
+</div>
+
+
+<style>
+    .cursor-pointer {
+        cursor: pointer;
+        font-size: 1.3rem;
+    }
+     
+</style>
+@code {
+    [Parameter] public EventCallback<string> OnEmojiSelected { get; set; }
+
+    private async Task AddEmoji(string emoji)
+    {
+        // Trigger the event to notify the parent component (e.g., chat page)
+        await OnEmojiSelected.InvokeAsync(emoji);
+
+        // Optionally close the emoji picker after selection
+        await JSRuntime.InvokeVoidAsync("toggleEmojiPicker");
+    }
+}

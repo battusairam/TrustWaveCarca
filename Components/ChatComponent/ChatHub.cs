@@ -10,6 +10,15 @@ public class ChatHub : Hub
     {
         await Clients.All.SendAsync("UpdateUserStatus", userId, isOnline);
     }
+    public async Task NotifyTyping(string fromUserId, string toUserId, bool isTyping)
+    {
+        if (UserConnections.TryGetValue(toUserId, out var connectionId))
+        {
+            await Clients.Client(connectionId).SendAsync("UserTyping", fromUserId, isTyping);
+            Console.WriteLine($"{fromUserId} is typing to {toUserId}: {isTyping}");
+        }
+    }
+
     public override async Task OnConnectedAsync()
     {
         // Assume the user ID is passed as a query parameter
@@ -62,4 +71,7 @@ public class ChatHub : Hub
             Console.WriteLine($"User {toUserId} is not connected.");
         }
     }
+
+   
+
 }
