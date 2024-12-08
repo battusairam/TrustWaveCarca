@@ -105,7 +105,7 @@ namespace TrustWaveCarca
                 app.UseHsts();
             }
 
-            //app.UseHttpsRedirection();
+            app.UseHttpsRedirection();
 
             app.UseStaticFiles();
             app.UseAuthentication(); // Ensure authentication is before SignalR mapping
