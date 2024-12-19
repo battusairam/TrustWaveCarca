@@ -11,6 +11,7 @@ using TrustWaveCarca.Services.SmsService;
 using TrustWaveCarca.Reusable;
 using TrustWaveCarca.Components.Account.Pages.User;
 using TrustWaveCarca.Components.ChatComponent;
+using TrustWaveCarca.Services;
 
 namespace TrustWaveCarca
 {
@@ -63,7 +64,9 @@ namespace TrustWaveCarca
             builder.Services.AddScoped<InitialLoading>();
             builder.Services.AddScoped<Partnerchat>();
             builder.Services.AddScoped<Chatacceptrequest>();
+            builder.Services.AddScoped<ChatMessageService>();
             builder.Services.AddBootstrapBlazor();
+  
             //builder.Services.AddScoped<ChatRequestState>();
 
 

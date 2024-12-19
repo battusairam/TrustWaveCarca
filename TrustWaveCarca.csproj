@@ -16,18 +16,28 @@
   </ItemGroup>
 
   <ItemGroup>
-	  <PackageReference Include="Blazor_EmojiFilePicker" Version="0.0.3" />
-	  <PackageReference Include="Microsoft.AspNetCore.Components" Version="8.0.11" />
+ 	  <PackageReference Include="Microsoft.AspNetCore.Components" Version="8.0.11" />
 
+	  <PackageReference Include="BootstrapBlazor" Version="9.0.2-beta06" />
+	  <PackageReference Include="Microsoft.AspNetCore.Components" Version="8.0.11" />
+  
 	  <PackageReference Include="BootstrapBlazor" Version="9.0.2-beta06" />
     <PackageReference Include="FluentEmail.Core" Version="3.0.2" />
     <PackageReference Include="FluentEmail.Smtp" Version="3.0.2" />
     <PackageReference Include="Microsoft.AspNetCore.Components" Version="8.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.6" />
+      <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.6" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.6" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="7.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.10" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.2" />
     <PackageReference Include="Twilio" Version="7.6.0" />
   </ItemGroup>
 

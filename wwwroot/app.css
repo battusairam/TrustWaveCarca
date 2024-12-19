@@ -14,17 +14,19 @@ a, .btn-link {
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
+
 .bgcolor {
     background: linear-gradient(120deg, #6a11cb, #2575fc);
-    color:white;
+    color: white;
 }
+
 .btnbgcolor {
     background: linear-gradient(120deg, #6a11cb, #2575fc); /* Gradient background */
     color: white; /* Text color */
     border: 2px solid transparent; /* Make the border transparent */
- }
+}
 
 
 .content {
@@ -63,6 +65,7 @@ h1:focus {
 
 /*-----------------------------------------------------------------------------------------------------------------------------------*/
 
+
 .chat-container {
     width: 100%;
     max-width: 600px;
@@ -84,14 +87,14 @@ h1:focus {
     font-size: 1.2rem;
 }
 
-.user-status {
+.chat-user-status {
     display: flex;
     justify-content: flex-start;
     align-items: center;
     margin-top: 10px;
 }
 
-    .user-status span {
+    .chat-user-status span {
         font-size: 1rem;
         margin-right: 5px;
     }
@@ -117,18 +120,18 @@ h1:focus {
         margin-bottom: 10px;
         border-radius: 15px;
         position: relative;
-        max-width: 70%;
+        max-width: 50%;
         word-wrap: break-word;
     }
 
-.sent {
+.chat-sent {
     background-color: #e7e7e7;
     color: black;
     align-self: flex-end;
     margin-left: auto;
 }
 
-.received {
+.chat-received {
     background-color: #e7e7e7;
     color: black;
     align-self: flex-start;
@@ -162,7 +165,7 @@ h1:focus {
             background-color: #0056b3;
         }
 
-.status-dot {
+.chat-status-dot {
     width: 10px;
     height: 10px;
     border-radius: 50%;
@@ -170,33 +173,37 @@ h1:focus {
     margin-left: 5px;
 }
 
-.online {
+.chat-online {
     background-color: green;
 }
 
-.offline {
+.chat-offline {
     background-color: red;
 }
 
-/* Apply color only to the word 'Send' */
-.sent-text {
+.chat-sent-text {
     color: #007bff; /* Blue color for "Send" */
 }
 
-.received-text {
+.chat-received-text {
     color: #2e7d32; /* Green color for "Send" */
 }
 
-.message-time {
+.chat-message-time {
     font-size: 0.8rem;
     color: #888;
     margin-left: 10px;
 }
 
-.typing-indicator {
+.chat-typing-indicator {
     font-style: italic;
     color: #888;
     margin-top: 5px;
     margin-bottom: -10px;
 }
 
+.chat-messages-container {
+    height: 300px; /* Set a fixed height */
+    overflow-y: scroll; /* Enable vertical scrolling */
+    scroll-behavior: smooth; /* Smooth scroll effect */
+}

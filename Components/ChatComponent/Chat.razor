@@ -3,13 +3,18 @@
 @using Microsoft.AspNetCore.SignalR.Client
 @using TrustWaveCarca.Components.ChatComponent
 @using TrustWaveCarca.Components.ChatComponent.Feature
+@using TrustWaveCarca.Data
+@using TrustWaveCarca.Services
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 @inject IHubContext<ChatHub> HubContext
+@inject ChatMessageService chatservice
 @rendermode InteractiveServer
+ 
 @attribute [Authorize]
 
 <style>
+
     .chat-container {
         width: 100%;
         max-width: 600px;
@@ -54,6 +59,25 @@
         border-radius: 5px;
     }
 
+        /* Hide the scrollbar for Webkit browsers (Chrome, Safari, Edge) */
+        .chat-messages::-webkit-scrollbar {
+            display: none; /* Hides the scrollbar */
+        }
+
+    /* Hide the scrollbar for Firefox */
+    .chat-messages {
+        scrollbar-width: none; /* For Firefox */
+    }
+
+        /* Optionally, if you want to remove the 'track' and 'thumb' in other browsers */
+        .chat-messages::-webkit-scrollbar-track {
+            background: transparent; /* Hide the track */
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: transparent; /* Hide the thumb */
+        }
+
         .chat-messages ul {
             list-style-type: none;
             padding: 0;
@@ -72,16 +96,18 @@
     .sent {
         background-color: #e7e7e7;
         color: black;
-        align-self: flex-end;
-        margin-left: auto;
+        align-self: flex-end; /* Right side for sent messages */
+        margin-left: auto; /* Right side */
     }
 
     .received {
         background-color: #e7e7e7;
         color: black;
-        align-self: flex-start;
-        margin-right: auto;
+        align-self: flex-start; /* Left side for received messages */
+        margin-right: auto; /* Left side */
+      
     }
+
 
     .chat-input {
         display: flex;
@@ -164,35 +190,39 @@
         <span class="status-dot @GetUserStatusClass(TargetUserId)"></span>
     </div>
     <div>
-        @if (isTyping)
+      @*   @if (isTyping)
         {
+            <p class="typing-indicator"> is typing...</p>
+        } *@
+         @if (isTyping && TargetUserId != UserId) 
+         {
             <p class="typing-indicator">@TargetUserId is typing...</p>
-        }
+         }
     </div>
     <div class="chat-messages" @ref="messagesContainer">
         @if (messages.Any())
         {
             <ul>
-                @foreach (var msg in messages)
-                {
-                    <li class="@GetMessageClass(msg.Content)">
-                        <span class="message-content">
-                            @if (msg.Content.StartsWith("Send:"))
-                            {
-                                <span class="sent-text">Send</span>
-                                @msg.Content.Substring(4)
-                            }
-                            else
-                            {
-                                <span class="received-text">Received</span>
-                                @msg.Content.Substring(8)
-                            }
-                        </span>
-                        <span class="message-time">
-                            @msg.Timestamp.ToString("hh:mm tt")
-                        </span>
-                    </li>
-                }
+        @foreach (var msg in messages)
+        {
+            <li class="@GetMessageClass(msg)">
+                <span class="message-content">
+                    @if (msg.SenderId == UserId) 
+                    {
+                        <span class="sent-text">Send: </span>  <!-- Display "Send" for sent messages -->
+                        @msg.Content
+                    }
+                    else   
+                    {
+                        <span class="received-text">Received: </span>  <!-- Display "Received" for received messages -->
+                        @msg.Content
+                    }
+                </span>
+                <span class="message-time">
+                    @msg.Timestamp.ToString("hh:mm tt")
+                </span>
+            </li>
+        }
             </ul>
         }
         else
@@ -216,7 +246,8 @@
 
 </div>
 
-@code {
+@code 
+{
     [Parameter] public string UserId { get; set; }
     [Parameter] public string TargetUserId { get; set; }
 
@@ -229,18 +260,17 @@
     private bool isTyping;
     private Timer typingTimer;
 
-
     private string GetUserStatusClass(string userId)
     {
         return userStatuses.ContainsKey(userId) && userStatuses[userId] ? "online" : "offline";
     }
 
-    private void OnMessageTyping()
+    private async void OnMessageTyping()
     {
         if (!isTyping)
         {
             isTyping = true;
-            NotifyTyping(true);
+            await NotifyTyping(true);
         }
 
         typingTimer?.Dispose();
@@ -250,7 +280,7 @@
     private async void TypingTimeout(object state)
     {
         isTyping = false;
-        NotifyTyping(false);
+       await NotifyTyping(false);
 
         await InvokeAsync(StateHasChanged);
     }
@@ -264,18 +294,20 @@
     }
 
 
-    private string GetMessageClass(string msg)
+    private string GetMessageClass(ChatMessage msg)
     {
-        // Assuming you can distinguish between sent and received messages using a specific marker or condition
-        if (msg.StartsWith("Send:"))
+        // Check if the message was sent by the current user
+        if (msg.SenderId == UserId)
         {
-            return "sent";
+            return "sent";  // Sent message will appear on the right
         }
         else
         {
-            return "received";
+            return "received";  // Received message will appear on the left
         }
     }
+
+
     private void ToggleEmojiPicker()
     {
         JSRuntime.InvokeVoidAsync("toggleEmojiPicker");
@@ -293,8 +325,14 @@
         // Establish SignalR connection
         hubConnection = new HubConnectionBuilder()
             .WithUrl(NavigationManager.ToAbsoluteUri($"/chathub?userId={UserId}"))
+            .WithAutomaticReconnect()
             .Build();
 
+        // Fetch the existing chat history
+        messages = await chatservice.GetMessages(UserId, TargetUserId);
+
+        var uniqueMessages = messages.DistinctBy(msg => msg.MessageId).ToList();
+        messages = uniqueMessages;
         hubConnection.On<string, bool>("UserTyping", async (fromUserId, isTyping) =>
         {
             if (fromUserId == TargetUserId)
@@ -306,33 +344,43 @@
 
         hubConnection.On<string, bool>("UpdateUserStatus", async (userId, isOnline) =>
         {
-            if (userId == TargetUserId) // Update only the target user
+            if (!string.IsNullOrEmpty(userId))
             {
                 userStatuses[userId] = isOnline;
                 await InvokeAsync(StateHasChanged);
-                
-
             }
         });
 
-        hubConnection.On<string>("ReceiveMessage", (receivedMessage) =>
+        hubConnection.On<string, string>("ReceiveMessage", (receivedMessage, messageId) =>
         {
-            InvokeAsync(async () =>
+            // Check if the message has already been received based on the unique ID
+            if (!messages.Any(msg => msg.MessageId == messageId))
             {
-                messages.Add(new ChatMessage
-                    {
-                        Content = $"Received: {receivedMessage}",
-                        Timestamp = DateTime.Now
-                    });
-                // Scroll to the bottom after adding a new message
-                await ScrollToBottom();
-                await InvokeAsync(StateHasChanged);
+                InvokeAsync(async () =>
+                {
+                    // Store received message in the database
+                    var receivedChatMessage = new ChatMessage
+                        {
+                            SenderId = TargetUserId,
+                            ReceiverId = UserId,
+                            Content = receivedMessage,
+                            Timestamp = DateTime.UtcNow.AddHours(5).AddMinutes(30),
+                            IsRead = false,
+                            MessageId = messageId // Store the unique message ID
+                        };
+                    await chatservice.SaveMessageToDatabase(receivedChatMessage);
 
-            });
+                    // Add to local message list
+                    messages.Add(receivedChatMessage);
+                    await ScrollToBottom();
+                    await InvokeAsync(StateHasChanged);
+
+                });
+            }
         });
 
         try
-        { 
+        {
             // Start the connection and ensure the status is updated
             await hubConnection.StartAsync();
             await NotifyUserStatus(true);
@@ -342,8 +390,8 @@
         {
             Console.Error.WriteLine($"Error starting connection: {ex.Message}");
         }
-      
     }
+
 
     private async Task NotifyUserStatus(bool isOnline)
     {
@@ -359,15 +407,33 @@
         {
             try
             {
-                await hubConnection.SendAsync("SendMessage", TargetUserId, message);
-                messages.Add(new ChatMessage
+                // Create a unique identifier for the message to prevent duplicate sends
+                var messageId = Guid.NewGuid().ToString();
+                // Send the message via SignalR
+                await hubConnection.SendAsync("SendMessage", TargetUserId, message,messageId);
+
+                // Store the sent message in the database
+                var sentMessage = new ChatMessage
                     {
-                        Content = $"Send: {message}",
-                        Timestamp = DateTime.Now
-                    });
+                        SenderId = UserId,
+                        ReceiverId = TargetUserId,
+                        Content = message,
+                        Timestamp = DateTime.UtcNow.AddHours(5).AddMinutes(30),
+                        IsRead = false, // Message is initially unread
+                        MessageId = messageId // Store the unique message ID
+                    };
+                await chatservice.SaveMessageToDatabase(sentMessage);
+
+                // Add to local message list for immediate display
+                messages.Add(sentMessage);
+               
+                // Immediately trigger UI update
+                await InvokeAsync(StateHasChanged);  // Ensure the UI is updated
+
                 // Scroll to the bottom after sending a new message
                 await ScrollToBottom();
 
+                // Clear the input message
                 message = string.Empty;
             }
             catch (Exception ex)
@@ -381,6 +447,7 @@
         }
     }
 
+   
     private async Task ScrollToBottom()
     {
         // This uses JS interop to scroll the chat messages container to the bottom
@@ -395,9 +462,10 @@
         }
     }
 
-    public class ChatMessage
-    {
-        public string Content { get; set; }
-        public DateTime Timestamp { get; set; }
-    }
+    
+    // public class ChatMessage
+    // {
+    //     public string Content { get; set; }
+    //     public DateTime Timestamp { get; set; }
+    // }
 }

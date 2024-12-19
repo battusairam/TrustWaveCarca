@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 public class ChatHub : Hub
 {
-    private static readonly ConcurrentDictionary<string, string> UserConnections = new();
+    public static readonly ConcurrentDictionary<string, string> UserConnections = new();
 
     public async Task NotifyUserStatus(string userId, bool isOnline)
     {
@@ -12,12 +12,23 @@ public class ChatHub : Hub
     }
     public async Task NotifyTyping(string fromUserId, string toUserId, bool isTyping)
     {
-        if (UserConnections.TryGetValue(toUserId, out var connectionId))
+        Console.WriteLine($"NotifyTyping called - fromUserId: {fromUserId}, toUserId: {toUserId}, isTyping: {isTyping}");
+
+        // Ensure that the fromUserId and toUserId are not the same
+        if (fromUserId != toUserId)
         {
-            await Clients.Client(connectionId).SendAsync("UserTyping", fromUserId, isTyping);
-            Console.WriteLine($"{fromUserId} is typing to {toUserId}: {isTyping}");
+            if (UserConnections.TryGetValue(toUserId, out var connectionId))
+            {
+                await Clients.Client(connectionId).SendAsync("UserTyping", fromUserId, isTyping);
+                Console.WriteLine($"{fromUserId} is typing to {toUserId}: {isTyping}");
+            }
+        }
+        else
+        {
+            Console.WriteLine("Error: fromUserId and toUserId should not be the same.");
         }
     }
+
 
     public override async Task OnConnectedAsync()
     {
@@ -59,12 +70,14 @@ public class ChatHub : Hub
         await base.OnDisconnectedAsync(exception);
     }
 
-    public async Task SendMessage(string toUserId, string message)
+    public async Task SendMessage(string toUserId, string message, string messageId)
     {
         if (UserConnections.TryGetValue(toUserId, out var connectionId))
         {
-            await Clients.Client(connectionId).SendAsync("ReceiveMessage", message);
-            Console.WriteLine($"Message sent to {toUserId}: {message}");
+            // Check if the messageId already exists in the connected user (if it does, prevent re-sending)
+            // Here you could store already sent messages in a dictionary, cache, or database
+            await Clients.Client(connectionId).SendAsync("ReceiveMessage", message, messageId);
+            Console.WriteLine($"Message sent to {toUserId}: {message} with messageId: {messageId}");
         }
         else
         {
@@ -72,6 +85,6 @@ public class ChatHub : Hub
         }
     }
 
-   
+
 
 }

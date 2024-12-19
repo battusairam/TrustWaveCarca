@@ -14,6 +14,8 @@ namespace TrustWaveCarca.Data
          public DbSet<ChatRequest> ChatRequest { get; set; }
 
         public DbSet<PartnerChat> PartnerChat { get; set; }
+      
+        public DbSet<ChatMessage> ChatMessages { get; set; }
 
          protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -30,6 +32,18 @@ namespace TrustWaveCarca.Data
             modelBuilder.Entity<UserLoginCredentials>()
                        .HasIndex(u => u.UniqueLoginID)
                        .IsUnique();
+
+            modelBuilder.Entity<ChatMessage>()
+                .HasKey(m => m.Id); // Define Id as the primary key
+            modelBuilder.Entity<ChatMessage>()
+                .Property(m => m.Id)
+                .ValueGeneratedOnAdd(); // Auto-increment
+            modelBuilder.Entity<ChatMessage>()
+                .Property(m => m.Timestamp)
+                .HasColumnType("timestamp with time zone");
+
+
+
 
         }
     }
